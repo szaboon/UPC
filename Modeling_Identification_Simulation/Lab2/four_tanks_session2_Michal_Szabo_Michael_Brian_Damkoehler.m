@@ -1,0 +1,109 @@
+clc
+clear
+
+%% parameters of the four_tank_model are defined
+g=981; %cm/s2
+a1=0.071; %cm2
+A1=28; %cm2
+k1=3.33; %cm3/Vs
+gamma1=0.7;
+
+a2=0.071; %cm2
+A2=28; %cm2
+k2=3.33; %cm3/Vs
+gamma2=0.7;
+
+a3=0.071; %cm2
+A3=28; %cm2
+
+
+a4=0.071; %cm2
+A4=28; %cm2
+%% equilibrium point is calculated 
+v10=2;
+v20=2;
+
+Ts=1;
+
+h30=0.4036;
+h40=0.4036;
+h10=4.4847;
+h20=4.4847;
+
+%% the linear model is defined
+A=[-0.0265 0 0.0884 0;0 -0.0265 0 0.0884; 0 0 -0.0884 0; 0 0 0 -0.0884];
+B=[0.0833 0;0 0.0833; 0 0.0357;0.0357 0];
+C=[1 0 0 0;0 1 0 0;0 0 1 0;0 0 0 1];
+D=[0 0;0 0;0 0;0 0];
+
+%% the linear model and non-linear model 
+
+t1=200;  %s time instant when pump 1 increases tension
+v11=2.2; %V is the input 1 at t1
+t2=400;  %s time instant when pump 1 increases tension
+v22=1.8; %V is the input 2 at t2
+
+%Sensors
+de=0.025;
+seed=[1 253 529 751];
+
+%% Calling (executing) the simulink file
+
+sim('simulator_P2_2.slx')
+
+
+% now you can use the variables v1, v2, h1, h2, h3, h4, h1_lin, h2_lin,
+% h3_lin and h4_lin
+
+% Exercise 1
+% Linear
+Phi = [];
+for k = 1:length(h1)-1
+    Y(k,1) = h1_lin(k+1)-h10;
+    Phi = [Phi;h1_lin(k)-h10,v1(k)-v10,h3_lin(k)-h30];    
+end
+
+% Non-linear
+% Phi = [];
+% for k = 1:length(h1)-1
+%     Y(k,1) = h1(k+1);
+%     Phi = [Phi;h1(k),v1(k),h3(k)];    
+% end
+
+Parameters = [0.9735;0.0833;0.0884];
+% Parameters = [0.9539;0.1303;0.0949];
+% Parameters = [0.9740;0.0813;0.0865];
+
+% Exercise 2
+FI = inv(transpose(Phi)*Phi)*transpose(Phi);
+FI_p = pinv(Phi);
+
+Theta = FI_p*Y
+Percentage = (Theta-Parameters)./Parameters.*100
+
+% Exercise 3
+z = [h1,[v1,h3]];
+sys = arx(z,[1,[1 1],[1 1]])
+
+%% Exercise 4
+
+a = 1;
+b11 = -a1/A1 * sqrt(2*g);
+b12 = a3/A1 * sqrt(2*g);
+b13 = (gamma1*k1)/A1;
+
+param = [a b11 b12 b13]
+
+Phi = [];
+for k = 1:length(h1)-1
+    Y(k,1) = h1(k+1);
+    Phi = [Phi;h1(k),sqrt(h1(k)),sqrt(h3(k)),v1(k)];    
+end
+
+FI = inv(transpose(Phi)*Phi)*transpose(Phi);
+FI_p = pinv(Phi);
+
+Theta = FI_p*Y
+
+z = [Y,[Phi(:,1),Phi(:,2),Phi(:,3)]];
+sys = arx(z,[1,[1 1],[1 1],[1 1]])

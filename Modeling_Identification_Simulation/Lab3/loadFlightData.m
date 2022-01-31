@@ -1,0 +1,93 @@
+load exp_ini_fase1.txt
+close all
+dibujaEnsayo(exp_ini_fase1)
+t=exp_ini_fase1(:,1);
+T = t(4)-t(3);
+x=exp_ini_fase1(:,2);
+vx=exp_ini_fase1(:,3);
+y=exp_ini_fase1(:,4);
+vy=exp_ini_fase1(:,5);
+mp=exp_ini_fase1(:,6);
+mr=exp_ini_fase1(:,7);
+
+%% Plot to determine delay
+exp = exp_ini_fase1
+figure
+plot(exp(:,1),exp(:,2)), hold on
+plot(exp(:,1),exp(:,3))
+plot(exp(:,1),exp(:,6))
+
+
+%% Data division
+
+ident = exp_ini_fase1(1:5400,:);
+valid = exp_ini_fase1(5401:10750,:);
+test = exp_ini_fase1(10751:end,:);
+
+%% Verification of position as being the velocity integral
+x_i=ident(:,2);
+vx_i=ident(:,3);
+
+x_v=valid(:,2);
+vx_v=valid(:,3);
+mp_v=valid(:,2);
+mp_i=ident(:,6);
+
+% dx=zeros(length(x)-1,1);
+% for k=2:length(x)
+%         dx(k-1)=x(k)-x(k-1);
+% end
+% sum(abs(dx))/5399
+
+%  z = [x_i,vx_i]);
+%  sys = arx(z,[1 1 1])
+
+% Deviation sigma e[0.02005,0.02003]
+
+
+
+% Delay
+% findelay()
+%% sys1
+na = 1; % order of polynomial A(q)
+nb = 1; % order of polynomial B(q)
+nk = 2; % input-output delay
+
+z = [vx_i,mp_i];
+sys1 = arx(z,[na nb nk])
+[A,B,devA,devB] = arxdata(sys1)
+
+z_v = [vx_v,mp_v];
+compare(z_v,sys1)
+
+
+
+id = iddata(vx,mp,T)
+delayest(id)
+
+
+%% sys2
+na = 5; % order of polynomial A(q)
+nb = 5; % order of polynomial B(q)
+nk = 2; % input-output delay
+% nk = finddelay(vx,x)
+z = [vx_i,mp_i];
+sys2 = arx(z,[na nb nk])
+[A,B,devA,devB] = arxdata(sys2)
+
+z_v = [vx_v,mp_v];
+compare(z_v,sys2)
+
+
+%% sys3
+na = 5; % order of polynomial A(q)
+nb = 5; % order of polynomial B(q)
+nk = 2; % input-output delay
+
+z = [vx_i,mp_i];
+sys3 = arx(z,[na nb nk])
+[A,B,devA,devB] = arxdata(sys3)
+
+z_v = [vx_v,mp_v];
+compare(z_v,sys3)
+
