@@ -1,0 +1,114 @@
+%% Practice 4
+close all; clc; clear
+
+I = imread("images\chess.jpg");
+I = rgb2gray(I);
+sigma = 5;
+
+sobelx = [-1 0 1;-2 0 2;-1 0 1];
+sobely = [-1 -2 -1;0 0 0;1 2 1];
+
+Ix = imfilter(I,sobelx);
+Iy = imfilter(I,sobely);
+
+Ix2 = Ix.^2;
+Iy2 = Iy.^2;
+Ixy = Ix.*Iy;
+
+Image = cat(3,Ix2,Iy2,Ixy);
+% subplot(2,2,1), imshow(Image)
+
+mask = fspecial('gaussian',sigma);
+Ix2g = imfilter(Ix2,mask);
+Ixyg = imfilter(Ixy,mask);
+Iy2g = imfilter(Iy2,mask);
+
+Trace = Ix2g+Iy2g;
+Det = Ix2g.*Iy2g-Ixyg.^2;
+
+k = 0.15;
+Mc = Det-k.*Trace.^2;
+figure, imshow(Mc)
+[x,y] = find(Mc);
+
+mask2 = [-1 0 1];
+eqM2 = imfilter(Mc,mask2(1));
+
+mask3 = [-1;0;1];
+eqM3 = imfilter(eqM2,mask3);
+
+mask4 = [-1 0 1];
+eqM4 = imfilter(eqM3,mask4);
+
+mask5 = [-1;0;1];
+eqM5 = imfilter(eqM4,mask5);
+
+% eqM2 = medfilt2(eqM1)
+figure, imshow(eqM2)
+% eqM3 = medfilt2(eqM2)
+figure, imshow(eqM3)
+% eqM4 = medfilt2(eqM3)
+figure, imshow(eqM4)
+% eqM5 = medfilt2(eqM4)
+figure, imshow(eqM5)
+% I_corners = cat(3, I+eqM, I-eqM, I-eqM);
+% figure, imshow(I_corners)
+[x,y] = find(eqM1)
+
+% figure, imshow(I), hold on,
+% plot(x(:),y(:),'r*'), hold off   % Drawing bounding box of CC
+% title("My Corner Detection")
+
+% C=[];
+% for i=1:length(loc)
+%     C = [C;Mc(loc(i))];
+% end
+% C
+
+% subplot(3,4,1), imshow(I), title('I')
+% subplot(3,4,2), imshow(Ix), title('Ix')
+% subplot(3,4,3), imshow(Iy), title('Iy')
+% subplot(3,4,4), imshow(Ix2), title('Ix2')
+% subplot(3,4,5), imshow(Iy2), title('Iy2')
+% subplot(3,4,6), imshow(Ix2g), title('Ix2g')
+% subplot(3,4,7), imshow(Ixyg), title('Ixyg')
+% subplot(3,4,8), imshow(Iy2g), title('Iy2g')
+% subplot(3,4,9), imshow(Det), title('Det')
+% subplot(3,4,10), imshow(Trace), title('Trace')
+% subplot(3,4,11), imshow(Mc), title('Mc')
+%%
+figure
+imshow(Mc)
+
+mask = ones(11);
+eqM = imfilter(Mc,mask);
+figure
+imshow(eqM)
+
+RGB1 = cat(3, I+eqM, I-eqM, I-eqM);  % information stored in intensity
+% RGB2 = I;
+% RGB2(end, end, 3) = 0;  % All information in red channel
+% GrayIndex = uint8(floor(I * 255));
+% Map       = jet(255);
+% RGB3      = ind2rgb(GrayIndex, Map);
+figure, imshow(RGB1)
+% figure, imshow(RGB2)
+% figure, imshow(RGB3)
+
+% [M2, rect] = imcrop(Mc);
+% imshow(M2)
+% imwrite(M2,'person_temp.jpg')
+
+
+%%
+filter = [0.25 0.5 0.25];
+C = cornermetric(I,'FilterCoefficients',filter);
+corner_peaks = imregionalmax(C);
+corner_idx = find(corner_peaks == true);
+[r,g,b] = deal(I);
+r(corner_idx) = 255;
+g(corner_idx) = 0;
+b(corner_idx) = 0;
+RGB = cat(3,r,g,b);
+subplot(1,3,2), imshow(RGB)
+
